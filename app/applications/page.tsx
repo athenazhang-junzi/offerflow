@@ -26,10 +26,16 @@ const columns = [
 
 type StatusKey = (typeof columns)[number]['key'];
 
+type MaterialItem = {
+  name: string;
+  completed: boolean;
+};
+
 type ApplicationCard = (typeof seedCards)[0] & {
   jdText?: string;
   lastFollowUpAt?: string;
   lastFollowUpNote?: string;
+  materialChecklist?: MaterialItem[];
 };
 
 type ReviewItem = {
@@ -145,6 +151,10 @@ function getFollowUpLabel(note?: string) {
 }
 
 function getMockMaterials(card: ApplicationCard) {
+  if (card.materialChecklist && card.materialChecklist.length > 0) {
+    return card.materialChecklist;
+  }
+
   const presets = [
     { name: '简历', completed: true },
     { name: '作品集', completed: card.materialsDone >= 2 },
@@ -453,6 +463,78 @@ export default function ApplicationsPage() {
     }
   }
 
+  function handleToggleMaterial(materialName: string) {
+    if (!selectedCard) return;
+
+    const currentChecklist = getMockMaterials(selectedCard);
+    const nextChecklist = currentChecklist.map((item) =>
+      item.name === materialName
+        ? { ...item, completed: !item.completed }
+        : item
+    );
+
+    const nextDoneCount = nextChecklist.filter((item) => item.completed).length;
+
+    setCards((prev) =>
+      prev.map((card) =>
+        card.id === selectedCard.id
+          ? {
+              ...card,
+              materialChecklist: nextChecklist,
+              materialsDone: nextDoneCount,
+              materialsTotal: nextChecklist.length,
+            }
+          : card
+      )
+    );
+  }
+
+  function handleCompleteAllMaterials() {
+    if (!selectedCard) return;
+
+    const currentChecklist = getMockMaterials(selectedCard);
+    const nextChecklist = currentChecklist.map((item) => ({
+      ...item,
+      completed: true,
+    }));
+
+    setCards((prev) =>
+      prev.map((card) =>
+        card.id === selectedCard.id
+          ? {
+              ...card,
+              materialChecklist: nextChecklist,
+              materialsDone: nextChecklist.length,
+              materialsTotal: nextChecklist.length,
+            }
+          : card
+      )
+    );
+  }
+
+  function handleResetMaterials() {
+    if (!selectedCard) return;
+
+    const currentChecklist = getMockMaterials(selectedCard);
+    const nextChecklist = currentChecklist.map((item) => ({
+      ...item,
+      completed: false,
+    }));
+
+    setCards((prev) =>
+      prev.map((card) =>
+        card.id === selectedCard.id
+          ? {
+              ...card,
+              materialChecklist: nextChecklist,
+              materialsDone: 0,
+              materialsTotal: nextChecklist.length,
+            }
+          : card
+      )
+    );
+  }
+
   function handleSaveApplication() {
     if (!newCompany.trim() || !newRole.trim() || !newDeadline.trim()) {
       alert('请先填写公司、岗位名称和截止时间');
@@ -470,6 +552,12 @@ export default function ApplicationsPage() {
       status: 'prepare' as const,
       materialsDone: 0,
       materialsTotal: 4,
+      materialChecklist: [
+        { name: '简历', completed: false },
+        { name: '作品集', completed: false },
+        { name: '自我介绍', completed: false },
+        { name: '测评 / 笔试', completed: false },
+      ],
       stage: '待准备',
       aiTip: jdResult?.summary
         ? jdResult.summary
@@ -739,10 +827,10 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf7_0%,#f8fafc_40%,#f5f7fb_100%)] p-8">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#fffaf7_0%,#f8fafc_40%,#f5f7fb_100%)] p-4 md:p-8">
       <div className="max-w-[1600px] mx-auto">
-        <div className="mb-8 rounded-[28px] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-8 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
-          <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-6 md:mb-8 rounded-[28px] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-5 md:p-8 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+          <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
             <div className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">
               AI 驱动的求职流程管理
             </div>
@@ -753,51 +841,51 @@ export default function ApplicationsPage() {
               返回首页
             </Link>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">
+          <h1 className="mb-3 text-2xl font-bold tracking-tight md:text-3xl">
             OfferFlow · AI 求职申请管理看板
           </h1>
-          <p className="text-slate-300 max-w-2xl leading-7">
+          <p className="max-w-2xl text-sm leading-6 text-slate-300 md:text-base md:leading-7">
             帮助你统一管理岗位申请、截止日期、材料状态和面试进度，
             不只是记录状态，更能帮助你明确下一步动作。
           </p>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="rounded-[24px] bg-white border border-slate-200 p-5 shadow-sm">
+        <div className="mb-6 grid grid-cols-2 gap-3 md:mb-8 md:gap-4 xl:grid-cols-4">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <div className="text-sm text-slate-500">总申请数</div>
-            <div className="text-3xl font-bold text-slate-900 mt-2">
+            <div className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
               {totalCount}
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-white border border-slate-200 p-5 shadow-sm">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <div className="text-sm text-slate-500">紧急岗位</div>
-            <div className="text-3xl font-bold text-orange-600 mt-2">
+            <div className="mt-2 text-2xl font-bold text-orange-600 md:text-3xl">
               {urgentCount}
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-white border border-slate-200 p-5 shadow-sm">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <div className="text-sm text-slate-500">待投递</div>
-            <div className="text-3xl font-bold text-slate-900 mt-2">
+            <div className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
               {applyCount}
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-white border border-slate-200 p-5 shadow-sm">
+          <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm md:p-5">
             <div className="text-sm text-slate-500">目标岗位</div>
-            <div className="text-3xl font-bold text-violet-600 mt-2">
+            <div className="mt-2 text-2xl font-bold text-violet-600 md:text-3xl">
               {targetCount}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-9">
-            <div className="rounded-[28px] bg-white border border-slate-200 shadow-sm p-4">
-              <div className="flex items-center justify-between px-2 pt-2 pb-5">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-9">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+              <div className="flex flex-col gap-3 px-2 pt-2 pb-4 sm:flex-row sm:items-center sm:justify-between md:pb-5">
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold text-slate-900 md:text-xl">
                     申请进度总览
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
@@ -806,20 +894,20 @@ export default function ApplicationsPage() {
                 </div>
                 <button
                   onClick={() => setOpenNewDialog(true)}
-                  className="rounded-full bg-slate-900 text-white px-4 py-2 text-sm"
+                  className="w-full rounded-full bg-slate-900 px-4 py-2 text-sm text-white sm:w-auto"
                 >
                   新增申请
                 </button>
               </div>
 
-              <div className="grid grid-cols-6 gap-4">
+              <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 xl:mx-0 xl:grid xl:grid-cols-6 xl:overflow-visible xl:px-0 xl:pb-0">
                 {columns.map((col) => {
                   const items = cards.filter((card) => card.status === col.key);
 
                   return (
                     <div
                       key={col.key}
-                      className="rounded-[24px] bg-slate-50 border border-slate-200 p-3"
+                     className="min-w-[85vw] snap-start rounded-[24px] border border-slate-200 bg-slate-50 p-3 sm:min-w-[320px] xl:min-w-0"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-sm font-medium text-slate-700">
@@ -921,8 +1009,8 @@ export default function ApplicationsPage() {
             </div>
           </div>
 
-          <div className="col-span-3">
-            <div className="rounded-[28px] bg-white border border-slate-200 shadow-sm p-6">
+          <div className="xl:col-span-3">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm md:p-6">
               <h2 className="text-xl font-semibold text-slate-900 mb-1">
                 AI 助手
               </h2>
@@ -969,7 +1057,7 @@ export default function ApplicationsPage() {
                     {isGeneratingSuggestion ? '生成中...' : '重新生成建议'}
                   </button>
                 </div>
-                <div className="flex gap-3">
+                <div className="sticky bottom-0 -mx-5 flex flex-col gap-3 border-t bg-white/95 px-5 py-4 backdrop-blur sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:px-0 sm:py-0 sm:flex-row sm:flex-wrap md:-mx-6 md:px-6">
                   <button
                     onClick={() => setOpenNewDialog(true)}
                     className="flex-1 rounded-full bg-slate-900 text-white px-4 py-2 text-sm"
@@ -999,7 +1087,7 @@ export default function ApplicationsPage() {
                       window.localStorage.removeItem('offerflow_suggestions');
                       window.localStorage.removeItem('offerflow_interview_packs');
                     }}
-                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
+                    className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 sm:w-auto"
                   >
                     重置
                   </button>
@@ -1018,25 +1106,25 @@ export default function ApplicationsPage() {
             }
           }}
         >
-          <DialogContent className="max-w-3xl rounded-[28px] p-0 overflow-hidden">
+          <DialogContent className="flex h-[92vh] w-[95vw] max-w-3xl flex-col overflow-hidden rounded-[28px] p-0 sm:h-auto">
             {selectedCard && (
               <>
-                <div className="px-6 pt-6 pb-4 border-b bg-white sticky top-0 z-10">
+                <div className="sticky top-0 z-10 border-b bg-white px-5 pt-5 pb-4 md:px-6 md:pt-6">
                   <DialogHeader>
-                    <div className="flex items-start justify-between gap-4 pr-8">
+                  <div className="flex flex-col gap-3 pr-10 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <DialogTitle className="text-2xl font-bold text-slate-900">
+                        <DialogTitle className="text-xl font-bold text-slate-900 md:text-2xl">
                           {selectedCard.company} · {selectedCard.role}
                         </DialogTitle>
-                        <DialogDescription className="text-sm text-slate-500 leading-6 mt-2">
+                        <DialogDescription className="mt-2 text-sm leading-6 text-slate-500">
                           查看当前岗位的截止时间、申请阶段、材料准备情况与 AI 建议，
                           帮助你快速判断下一步动作。
                         </DialogDescription>
                       </div>
                       <div
-                        className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${getStageBadgeClass(
-                          selectedCard.status
-                        )}`}
+                        className={`inline-flex shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${getStageBadgeClass(
+                            selectedCard.status
+                          )}`}
                       >
                         {selectedCard.stage}
                       </div>
@@ -1044,8 +1132,8 @@ export default function ApplicationsPage() {
                   </DialogHeader>
                 </div>
 
-                <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-5">
-                  <div className="grid grid-cols-4 gap-4">
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 md:px-6 md:py-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 md:gap-4">
                     <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200">
                       <div className="text-xs text-slate-400 mb-1">截止时间</div>
                       <div className="text-sm font-medium text-slate-900">
@@ -1081,23 +1169,23 @@ export default function ApplicationsPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 flex-wrap">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <button
                       onClick={openEditForSelected}
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 sm:w-auto"
                     >
                       编辑申请
                     </button>
                     <button
                       onClick={handleDeleteApplication}
-                      className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100"
+                      className="w-full rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100 sm:w-auto"
                     >
                       删除申请
                     </button>
                     <button
                       onClick={handleGenerateInterviewPack}
                       disabled={isGeneratingInterviewPack}
-                      className="rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                      className="w-full rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-700 hover:bg-violet-100 disabled:opacity-50 sm:w-auto"
                     >
                       {isGeneratingInterviewPack ? '生成中...' : '生成面试准备包'}
                     </button>
@@ -1125,24 +1213,65 @@ export default function ApplicationsPage() {
                   </div>
 
                   <div className="rounded-2xl bg-white border border-slate-200 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm font-medium text-slate-900">
-                        材料清单
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <div className="text-sm font-medium text-slate-900">
+                          材料清单
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          已完成 {selectedCard.materialsDone}/{selectedCard.materialsTotal}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-400">
-                        已完成 {selectedCard.materialsDone}/
-                        {selectedCard.materialsTotal}
+
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCompleteAllMaterials}
+                          className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+                        >
+                          全部完成
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleResetMaterials}
+                          className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200"
+                        >
+                          全部重置
+                        </button>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       {getMockMaterials(selectedCard).map((item, index) => (
-                        <div
+                        <button
                           key={index}
-                          className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+                          type="button"
+                          onClick={() => handleToggleMaterial(item.name)}
+                          className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+                            item.completed
+                              ? 'border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70'
+                              : 'border-slate-100 bg-slate-50/70 hover:bg-slate-100'
+                          }`}
                         >
-                          <div className="text-sm text-slate-700">
-                            {item.name}
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs font-bold ${
+                                item.completed
+                                  ? 'border-emerald-500 bg-emerald-500 text-white'
+                                  : 'border-slate-300 bg-white text-slate-300'
+                              }`}
+                            >
+                              ✓
+                            </div>
+                            <div
+                              className={`text-sm ${
+                                item.completed
+                                  ? 'text-slate-900 font-medium'
+                                  : 'text-slate-700'
+                              }`}
+                            >
+                              {item.name}
+                            </div>
                           </div>
                           <div
                             className={`rounded-full px-2.5 py-1 text-[11px] font-medium border ${
@@ -1153,7 +1282,7 @@ export default function ApplicationsPage() {
                           >
                             {item.completed ? '已完成' : '待补充'}
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -1275,14 +1404,14 @@ export default function ApplicationsPage() {
                       <input
                         value={followUpNote}
                         onChange={(e) => setFollowUpNote(e.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-slate-400 outline-none"
+                        className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none"
                         placeholder="例如：已内推 / 已发邮件 / 已催进度 / 已约面试"
                       />
                     </div>
-                    <div className="flex gap-3 mt-4">
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                       <button
                         onClick={handleMarkFollowedUp}
-                        className="rounded-full bg-white text-slate-900 px-4 py-2 text-sm font-medium"
+                        className="w-full rounded-full bg-white px-4 py-3 text-sm font-medium text-slate-900 sm:w-auto"
                       >
                         标记为已跟进
                       </button>
@@ -1295,7 +1424,7 @@ export default function ApplicationsPage() {
                           setReviewReflection('');
                           setOpenReviewDialog(true);
                         }}
-                        className="rounded-full border border-white/20 text-white px-4 py-2 text-sm"
+                        className="w-full rounded-full border border-white/20 px-4 py-3 text-sm text-white sm:w-auto"
                       >
                         记录面试复盘
                       </button>
@@ -1378,8 +1507,8 @@ export default function ApplicationsPage() {
         </Dialog>
 
         <Dialog open={openNewDialog} onOpenChange={setOpenNewDialog}>
-          <DialogContent className="max-w-2xl rounded-[28px] p-0 overflow-hidden">
-            <div className="px-6 pt-6 pb-4 border-b bg-white sticky top-0 z-10">
+        <DialogContent className="flex h-[92vh] w-[95vw] max-w-2xl flex-col overflow-hidden rounded-[28px] p-0 sm:h-auto">
+        <div className="sticky top-0 z-10 border-b bg-white px-5 pt-5 pb-4 md:px-6 md:pt-6">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-slate-900">
                   新增申请
@@ -1390,7 +1519,7 @@ export default function ApplicationsPage() {
               </DialogHeader>
             </div>
 
-            <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+            <div className="flex-1 overflow-y-auto px-5 py-4 md:px-6 md:py-5">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-4">
                   <div>
@@ -1492,13 +1621,13 @@ export default function ApplicationsPage() {
                     setOpenNewDialog(false);
                     setJdResult(null);
                   }}
-                  className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-600"
+                  className="w-full rounded-full border border-slate-200 px-4 py-3 text-sm text-slate-600 sm:w-auto"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSaveApplication}
-                  className="rounded-full bg-slate-900 text-white px-4 py-2 text-sm"
+                  className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm text-white sm:w-auto"
                 >
                   保存申请
                 </button>
@@ -1508,7 +1637,7 @@ export default function ApplicationsPage() {
         </Dialog>
 
         <Dialog open={openReviewDialog} onOpenChange={setOpenReviewDialog}>
-          <DialogContent className="max-w-2xl rounded-[28px] p-0 overflow-hidden">
+          <DialogContent className="w-[95vw] max-w-2xl rounded-[28px] overflow-hidden p-0">
             <div className="px-6 pt-6 pb-4 border-b bg-white sticky top-0 z-10">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-slate-900">
@@ -1612,7 +1741,7 @@ export default function ApplicationsPage() {
         </Dialog>
 
         <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-          <DialogContent className="max-w-2xl rounded-[28px] p-0 overflow-hidden">
+          <DialogContent className="w-[95vw] max-w-2xl rounded-[28px] overflow-hidden p-0">
             <div className="px-6 pt-6 pb-4 border-b bg-white sticky top-0 z-10">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-slate-900">
@@ -1687,7 +1816,7 @@ export default function ApplicationsPage() {
                     <button
                       onClick={handleParseEditJD}
                       disabled={isParsingEditJD}
-                      className="rounded-full bg-violet-600 text-white px-4 py-2 text-sm disabled:opacity-50"
+                      className="w-full rounded-full bg-violet-600 px-4 py-3 text-sm text-white disabled:opacity-50 sm:w-auto"
                     >
                       {isParsingEditJD ? '解析中...' : '重新解析 JD'}
                     </button>
