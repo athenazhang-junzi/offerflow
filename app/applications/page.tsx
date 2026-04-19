@@ -632,21 +632,23 @@ export default function ApplicationsPage() {
     let nextJdResult = selectedJdResult ?? null;
 
     if (editJD.trim()) {
-      try {
-        setIsParsingEditJD(true);
-        nextJdResult = await parseJDText(editJD);
-        setJdResultsByCardId((prev) => ({
-          ...prev,
-          [selectedCard.id]: nextJdResult,
-        }));
-      } catch (error) {
-        console.error(error);
-        alert('JD 解析失败，请确认后端服务是否启动');
-        return;
-      } finally {
-        setIsParsingEditJD(false);
+        try {
+          setIsParsingEditJD(true);
+          const parsedResult = await parseJDText(editJD);
+          nextJdResult = parsedResult;
+  
+          setJdResultsByCardId((prev) => ({
+            ...prev,
+            [selectedCard.id]: parsedResult,
+          }));
+        } catch (error) {
+          console.error(error);
+          alert('JD 解析失败，请确认后端服务是否启动');
+          return;
+        } finally {
+          setIsParsingEditJD(false);
+        }
       }
-    }
 
     const updatedCard = {
       ...selectedCard,
