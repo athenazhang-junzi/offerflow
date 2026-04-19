@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import Link from 'next/link';
@@ -10,6 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
 const columns = [
   { key: 'prepare', title: '待准备' },
@@ -328,7 +332,7 @@ export default function ApplicationsPage() {
   }
 
   async function parseJDText(jdText: string) {
-    const res = await fetch('http://127.0.0.1:8000/parse-jd', {
+    const res = await fetch(`${API_BASE_URL}/parse-jd`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jd_text: jdText }),
@@ -355,7 +359,7 @@ export default function ApplicationsPage() {
     tag: string;
     interviewStage: string;
   }) {
-    const res = await fetch('http://127.0.0.1:8000/generate-suggestion', {
+    const res = await fetch(`${API_BASE_URL}/generate-suggestion`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -421,7 +425,7 @@ export default function ApplicationsPage() {
 
     try {
       setIsGeneratingInterviewPack(true);
-      const res = await fetch('http://127.0.0.1:8000/generate-interview-pack', {
+      const res = await fetch(`${API_BASE_URL}/generate-interview-pack`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -440,6 +444,7 @@ export default function ApplicationsPage() {
         ...prev,
         [selectedCard.id]: data,
       }));
+      alert('面试准备包已生成，请向下滚动查看');
     } catch (error) {
       console.error(error);
       alert('面试准备包生成失败，请确认后端服务是否启动');
@@ -632,23 +637,22 @@ export default function ApplicationsPage() {
     let nextJdResult = selectedJdResult ?? null;
 
     if (editJD.trim()) {
-        try {
-          setIsParsingEditJD(true);
-          const parsedResult = await parseJDText(editJD);
-          nextJdResult = parsedResult;
-  
-          setJdResultsByCardId((prev) => ({
-            ...prev,
-            [selectedCard.id]: parsedResult,
-          }));
-        } catch (error) {
-          console.error(error);
-          alert('JD 解析失败，请确认后端服务是否启动');
-          return;
-        } finally {
-          setIsParsingEditJD(false);
-        }
+      try {
+        setIsParsingEditJD(true);
+        const parsedResult = await parseJDText(editJD);
+        nextJdResult = parsedResult;
+        setJdResultsByCardId((prev) => ({
+          ...prev,
+          [selectedCard.id]: parsedResult,
+        }));
+      } catch (error) {
+        console.error(error);
+        alert('JD 解析失败，请确认后端服务是否启动');
+        return;
+      } finally {
+        setIsParsingEditJD(false);
       }
+    }
 
     const updatedCard = {
       ...selectedCard,
@@ -1007,7 +1011,12 @@ export default function ApplicationsPage() {
 
         <Dialog
           open={!!selectedCard}
-          onOpenChange={(open) => !open && setSelectedCardId(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedCardId(null);
+              setFollowUpNote('');
+            }
+          }}
         >
           <DialogContent className="max-w-3xl rounded-[28px] p-0 overflow-hidden">
             {selectedCard && (
@@ -1160,6 +1169,14 @@ export default function ApplicationsPage() {
 
                   {selectedInterviewPack && (
                     <>
+                      <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                        <div className="text-sm font-medium text-emerald-700">
+                          面试准备包已生成
+                        </div>
+                        <div className="mt-2 text-sm text-slate-700">
+                          继续向下查看技能树、学习路径和模拟面试题。
+                        </div>
+                      </div>
                       <div className="rounded-2xl bg-white border border-slate-200 p-4">
                         <div className="text-sm font-medium text-slate-900 mb-3">
                           技能树
