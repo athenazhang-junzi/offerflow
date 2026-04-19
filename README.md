@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OfferFlow
 
-## Getting Started
+一个面向求职季的 AI 求职申请管理系统。
 
-First, run the development server:
+## 项目简介
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+OfferFlow 用来帮助用户统一管理岗位申请、截止时间、材料准备、面试复盘与跟进动作。  
+它不只是一个状态记录工具，还结合 AI 能力，对 JD 进行解析、生成申请建议，并支持后续复盘与持续更新。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 核心功能
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. 申请看板管理
+- 按阶段查看岗位申请状态
+- 支持待准备、待投递、已投递、测评中、面试中、已结束等阶段
+- 展示截止时间、材料进度、AI 建议、最近跟进状态
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. JD 智能解析
+- 支持粘贴岗位 JD
+- 自动提取关键词、建议材料、优先级与岗位总结
+- 帮助用户判断岗位价值与准备方向
 
-## Learn More
+### 3. AI 建议生成
+- 根据岗位阶段、材料进度与截止时间动态生成建议
+- 支持在新增申请、修改 JD、切换状态后自动刷新建议
+- 右侧 AI 助手可展示当前最紧急岗位与推荐动作
 
-To learn more about Next.js, take a look at the following resources:
+### 4. 面试准备包
+- 根据 JD 信息生成技能树、学习路径与模拟面试题
+- 便于用户在面试前做针对性准备
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 5. 面试复盘
+- 记录面试轮次、时间、被问到的问题与复盘内容
+- 支持编辑与删除复盘记录
+- 帮助用户沉淀可复用经验
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 6. 跟进记录
+- 支持标记为已跟进
+- 可填写跟进备注，例如：已内推 / 已发邮件 / 已催进度
+- 展示最近跟进时间与状态
 
-## Deploy on Vercel
+### 7. 本地持久化
+- 看板数据支持 localStorage 保存
+- 刷新页面后仍可保留当前演示数据
+- 支持一键重置为初始状态
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 使用方式
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. 进入首页后点击“进入看板”
+2. 点击“新增申请”
+3. 填写公司、岗位、截止时间，并粘贴 JD
+4. 点击“AI 解析 JD”
+5. 保存申请后查看 AI 建议
+6. 在详情页中切换状态、生成面试准备包、记录复盘与跟进备注
+7. 如需修改岗位信息，可进入“编辑申请与 JD”重新解析
+
+## 产品亮点
+
+- 将求职流程从“零散记录”升级为“统一操作台”
+- 强调从 JD 到建议、从面试到复盘的完整闭环
+- 更适合作为求职工具 Demo 或作品集项目展示
+
+## 技术栈
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Radix UI / shadcn 风格弹窗组件
+- 本地 localStorage 持久化
+- Python 后端接口（用于 JD 解析、AI 建议生成、面试准备包生成）
+
+## 适用场景
+
+- 求职季多岗位申请管理
+- 面试准备与复盘整理
+- AI 产品 / 用户体验 / 求职工具方向作品集展示
+
+## 后续可迭代方向
+
+- 跟进历史时间线
+- 面试题自动分类与薄弱点总结
+- 岗位搜索与筛选
+- 简历版本管理
+- 云端数据同步
